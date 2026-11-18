@@ -1,0 +1,7 @@
+{
+  "cheapclankers": {
+    "base_url": "https://api.cheapclankers.com/v1",
+    "api_key_env": "CLANKER_API_KEY",
+    "api_base_env": "CLANKER_BASE_URL"
+  }
+}

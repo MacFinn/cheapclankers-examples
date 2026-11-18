@@ -18,3 +18,5 @@ python chat.py haystack
 LiteLLM uses its generic OpenAI route with the CheapClankers base URL. Haystack uses `OpenAIChatGenerator` with the same endpoint. Both disable automatic retries. The example stops before inference if the key cannot see the requested model.
 
 Run `python verify.py` to exercise both clients against a loopback API fixture using a dummy key. The fixture checks request paths, bearer authentication, the output token cap and the absence of a chat request when the model is unavailable to the key. Production inference and other protocols are outside this check.
+
+`litellm-provider.json` contains a proposed named provider registration. In a disposable virtual environment, run `python verify.py --provider` to test it against the same fixture. The test temporarily adds the entry to the installed LiteLLM registry and restores the original file afterward.

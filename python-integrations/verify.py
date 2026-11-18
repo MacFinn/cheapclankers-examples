@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import os
 import subprocess
 import sys
@@ -64,5 +65,29 @@ with ThreadingHTTPServer(("127.0.0.1", 0), Fixture) as server:
                     assert payload["model"] == model and payload["max_tokens"] == 64
                 assert "fixture-key" not in result.stdout + result.stderr
                 print(f"{client} / {model}: passed")
+        if "--provider" in sys.argv:
+            Fixture.requests.clear()
+            provider_file = Path(importlib.util.find_spec("litellm").origin).parent / "llms/openai_like/providers.json"
+            original = provider_file.read_bytes()
+            registry = json.loads(original)
+            registry.update(json.loads(Path(__file__).with_name("litellm-provider.json").read_bytes()))
+            try:
+                provider_file.write_text(json.dumps(registry), encoding="utf-8")
+                result = subprocess.run(
+                    [sys.executable, "-c",
+                     "from litellm import completion; "
+                     "r = completion(model='cheapclankers/fixture-model', "
+                     "messages=[{'role':'user','content':'Hello'}], max_tokens=64, num_retries=0); "
+                     "print(r.choices[0].message.content)"],
+                    env=env, capture_output=True, text=True, timeout=40,
+                )
+                assert result.returncode == 0 and "Hello from fixture" in result.stdout, result.stderr
+                assert len(Fixture.requests) == 1, Fixture.requests
+                method, path, auth, payload = Fixture.requests[0]
+                assert (method, path, auth) == ("POST", "/v1/chat/completions", "Bearer fixture-key")
+                assert payload["model"] == "fixture-model" and payload["max_tokens"] == 64
+                print("litellm / named provider: passed")
+            finally:
+                provider_file.write_bytes(original)
     finally:
         server.shutdown()
