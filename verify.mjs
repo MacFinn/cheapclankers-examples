@@ -7,6 +7,16 @@ import { test } from "node:test";
 
 const cwd = fileURLToPath(new URL(".", import.meta.url));
 const model = "fixture-chat-model";
+const failures = {
+  "invalid key": { status: 401, stage: "models" },
+  "restricted key": { status: 403, stage: "models" },
+  "wrong API root": { status: 404, stage: "models" },
+  "model list rate limit": { status: 429, stage: "models" },
+  "insufficient credit": { status: 402, stage: "chat" },
+  "unsupported chat route": { status: 404, stage: "chat" },
+  "chat rate limit": { status: 429, stage: "chat" },
+  "upstream unavailable": { status: 503, stage: "chat" },
+};
 
 for (const [language, command, file] of [
   ["Node.js", process.execPath, "node-chat.mjs"],
@@ -16,12 +26,11 @@ for (const [language, command, file] of [
     "success",
     "missing environment",
     "missing model",
-    "restricted key",
-    "insufficient credit",
-    "upstream unavailable",
+    ...Object.keys(failures),
   ]) {
     test(`${language}: ${scenario}`, { timeout: 15_000 }, async () => {
       const requests = [];
+      const failure = failures[scenario];
       const server = createServer(async (req, res) => {
         let raw = "";
         for await (const chunk of req) raw += chunk;
@@ -34,10 +43,12 @@ for (const [language, command, file] of [
         });
         res.setHeader("Content-Type", "application/json");
         res.setHeader("x-request-id", "fixture-request");
-        if (scenario === "restricted key") {
-          res.writeHead(403).end(
+        const stage = req.method === "GET" ? "models" : "chat";
+        if (failure?.stage === stage) {
+          if (failure.status === 429) res.setHeader("Retry-After", "1");
+          res.writeHead(failure.status).end(
             JSON.stringify({
-              error: { message: "Key restricted", type: "permission_error" },
+              error: { message: scenario, type: "fixture_error" },
             }),
           );
         } else if (req.url === "/v1/models" && req.method === "GET") {
@@ -61,48 +72,29 @@ for (const [language, command, file] of [
           req.url === "/v1/chat/completions" &&
           req.method === "POST"
         ) {
-          if (
-            ["insufficient credit", "upstream unavailable"].includes(scenario)
-          ) {
-            res.writeHead(scenario === "insufficient credit" ? 402 : 503).end(
-              JSON.stringify({
-                error: {
-                  message:
-                    scenario === "insufficient credit"
-                      ? "Insufficient credit"
-                      : "Upstream unavailable",
-                  type:
-                    scenario === "insufficient credit"
-                      ? "billing_error"
-                      : "server_error",
-                },
-              }),
-            );
-          } else {
-            res.end(
-              JSON.stringify({
-                id: "fixture-completion",
-                object: "chat.completion",
-                created: 0,
-                model,
-                choices: [
-                  {
-                    index: 0,
-                    message: {
-                      role: "assistant",
-                      content: "Hello from the local fixture.",
-                    },
-                    finish_reason: "stop",
+          res.end(
+            JSON.stringify({
+              id: "fixture-completion",
+              object: "chat.completion",
+              created: 0,
+              model,
+              choices: [
+                {
+                  index: 0,
+                  message: {
+                    role: "assistant",
+                    content: "Hello from the local fixture.",
                   },
-                ],
-                usage: {
-                  prompt_tokens: 8,
-                  completion_tokens: 6,
-                  total_tokens: 14,
+                  finish_reason: "stop",
                 },
-              }),
-            );
-          }
+              ],
+              usage: {
+                prompt_tokens: 8,
+                completion_tokens: 6,
+                total_tokens: 14,
+              },
+            }),
+          );
         } else {
           res
             .writeHead(404)
@@ -149,34 +141,27 @@ for (const [language, command, file] of [
           requests.length,
           scenario === "missing environment"
             ? 0
-            : [
-                  "success",
-                  "insufficient credit",
-                  "upstream unavailable",
-                ].includes(scenario)
+            : scenario === "success" || failure?.stage === "chat"
               ? 2
               : 1,
         );
         for (const request of requests)
           assert.equal(request.auth, "Bearer fixture-only-key");
+        if (requests.length) {
+          assert.equal(requests[0].method, "GET");
+          assert.equal(requests[0].path, "/v1/models");
+          assert.equal(requests[0].body, undefined);
+        }
         if (scenario === "success")
           assert.match(stdout, /Reply: Hello from the local fixture\./);
         if (scenario === "missing environment")
           assert.match(stderr, /Set CLANKER_API_KEY and CLANKER_MODEL/);
         if (scenario === "missing model")
           assert.match(stderr, /Selected model was not returned/);
-        if (
-          [
-            "restricted key",
-            "insufficient credit",
-            "upstream unavailable",
-          ].includes(scenario)
-        )
+        if (failure)
           assert.match(
             stderr,
-            new RegExp(
-              `status ${scenario === "restricted key" ? 403 : scenario === "insufficient credit" ? 402 : 503}.*fixture-request`,
-            ),
+            new RegExp(`status ${failure.status}.*fixture-request`),
           );
         const completion = requests.find(
           (request) => request.method === "POST",

@@ -75,7 +75,10 @@ The exact reply varies. Real requests consume prepaid USD credit; the 128-token 
 | 403                             | Restricted key or model access.                                                                    |
 | 404 / unavailable response      | Current model status and chat protocol support. A model may support Messages or Responses instead. |
 | 402                             | Available wallet credit and published rates.                                                       |
+| 429                             | Rate limits; inspect Retry-After and usage before deliberately retrying.                           |
 | Timeout / server error          | Keep the request ID and review usage before retrying.                                              |
+
+Use the [reproducible SDK error matrix](sdk-error-matrix.md) to distinguish a failed model-list request from a failed completion, and reproduce the examples' behavior without buying inference.
 
 These examples cover chat completions, not the Responses API, Claude Code, streaming or every upstream feature. SDKs and endpoint behavior can change; review the [Node SDK](https://github.com/openai/openai-node#readme) and [Python SDK](https://github.com/openai/openai-python#readme) documentation when updating dependencies.
 
@@ -89,4 +92,4 @@ npm test
 
 The harness replaces all `CLANKER_*` credentials/model/endpoint settings in its child processes with fixtures and uses a loopback-only HTTP server. It does not load a `.env` file or contact a production model. If Python is not named `python` on your machine, set `PYTHON_BIN` to its executable (for example, `export PYTHON_BIN=python3`).
 
-Twelve checks cover the two SDKs: successful chat, missing environment, absent model, restricted key, insufficient credit and upstream unavailability. A 503 fixture confirms that the SDK does not automatically retry the completion. The harness also checks the bearer header, versioned API paths and payload. Passing checks do not establish live model availability or production inference success.
+Twenty-two checks cover the two SDKs: successful chat, missing environment, absent model, 401/403/404/429 during model listing, and 402/404/429/503 during completion. Request counts confirm that failures do not trigger automatic retries, including 429 responses carrying Retry-After. The harness also checks the bearer header, request IDs, versioned API paths and payload. Passing checks do not establish live model availability or production inference success.
