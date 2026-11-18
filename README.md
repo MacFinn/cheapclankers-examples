@@ -4,6 +4,8 @@ Minimal Node.js and Python chat-completions examples using the official OpenAI S
 
 Start with the [API setup documentation](https://cheapclankers.com/docs). Review the [model catalogue](https://cheapclankers.com/models) and [published pricing](https://cheapclankers.com/pricing) before a real request. Both working examples are included below, so you can follow the setup without an additional tutorial.
 
+For visual automation, use the [importable n8n workflow](n8n/README.md). It checks model access before one capped chat request and includes an actual n8n import/execution test against a local fixture.
+
 ## Prerequisites
 
 Use Node.js 22 or later and Python 3.9 or later, with npm and pip. The package pins the JavaScript SDK to 7.60.0 and Python SDK to 2.24.0. Local verification also needs both runtimes. Create an account, verify it and create a server-side API key before a real request. Choose an enabled model whose catalogue entry supports **chat**; exact model IDs, availability and rates can change. The model returned for your key establishes access, not current availability or support for every protocol.

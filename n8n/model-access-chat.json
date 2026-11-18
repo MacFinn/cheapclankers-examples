@@ -1,0 +1,209 @@
+{
+  "name": "CheapClankers - model access check and one capped chat",
+  "nodes": [
+    {
+      "id": "5933b61d-4368-46c6-a8b8-56dbdd8785ec",
+      "name": "Run manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "bf0c065f-fc57-4fb8-8a54-d6dd0dac2770",
+      "name": "Configure request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "base",
+              "name": "baseUrl",
+              "value": "https://api.cheapclankers.com/v1",
+              "type": "string"
+            },
+            {
+              "id": "model",
+              "name": "model",
+              "value": "REPLACE_WITH_ENABLED_CHAT_MODEL_ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b7240ca1-583f-4623-8732-3911f0c97bc9",
+      "name": "List accessible models",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $('Configure request').first().json.baseUrl + '/models' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "a6349f66-4778-4916-8998-81f60e23465f",
+      "name": "Selected model accessible?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "access",
+              "leftValue": "={{ Array.isArray($json.data) && $json.data.some(model => model.id === $('Configure request').first().json.model) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0c7429b6-065c-49f1-a4a7-93145b8b8151",
+      "name": "Send one capped chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configure request').first().json.baseUrl + '/chat/completions' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { model: $('Configure request').first().json.model, messages: [{ role: 'user', content: 'Say hello in one short sentence.' }], max_tokens: 128, stream: false } }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "e257cf4e-2bc0-4c07-a994-0b4e02b55259",
+      "name": "Stop: model absent",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        960,
+        160
+      ],
+      "parameters": {
+        "errorMessage": "The selected model was not returned for this key. Check the exact model ID and permissions. No completion was sent."
+      }
+    },
+    {
+      "id": "b7d3531a-ae89-4f0a-8933-976ba6bdc3f4",
+      "name": "Setup and limits",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -430
+      ],
+      "parameters": {
+        "content": "## CheapClankers: check access, then send one chat\n1. Create an HTTP Header Auth credential: name `Authorization`, value `Bearer YOUR_API_KEY`. Select it on BOTH HTTP nodes. Keep keys out of workflow JSON.\n2. In Configure request, set an exact enabled chat-capable model ID. Keep the production API root unless testing a trusted local fixture.\n3. Run manually. Success lists models, then sends ONE request capped at 128 output tokens. Automatic retries are off.\n\nA listed model establishes access, not current availability or chat support. Real inference consumes prepaid USD credit. Review usage before retrying failures.\n\n[API docs](https://cheapclankers.com/docs) | [Model catalogue](https://cheapclankers.com/models)\n\nMaintained by CheapClankers. Local fixture verification does not establish live inference compatibility.",
+        "height": 350,
+        "width": 730
+      }
+    }
+  ],
+  "connections": {
+    "Run manually": {
+      "main": [
+        [
+          {
+            "node": "Configure request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure request": {
+      "main": [
+        [
+          {
+            "node": "List accessible models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List accessible models": {
+      "main": [
+        [
+          {
+            "node": "Selected model accessible?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Selected model accessible?": {
+      "main": [
+        [
+          {
+            "node": "Send one capped chat",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop: model absent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  },
+  "pinData": {},
+  "tags": []
+}
