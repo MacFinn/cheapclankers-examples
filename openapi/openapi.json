@@ -1,0 +1,261 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CheapClankers Model Access API",
+    "version": "1.0.0",
+    "description": "A reference for listing the models available to a CheapClankers API key and sending a bounded text chat request. Model access and supported protocols vary by model. Chat uses prepaid API credits.",
+    "contact": {
+      "name": "CheapClankers",
+      "url": "https://cheapclankers.com/docs"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.cheapclankers.com/v1"
+    }
+  ],
+  "externalDocs": {
+    "description": "CheapClankers API setup and documentation",
+    "url": "https://cheapclankers.com/docs"
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "paths": {
+    "/models": {
+      "get": {
+        "operationId": "listModels",
+        "summary": "List models available to this key",
+        "responses": {
+          "200": {
+            "description": "List of models available to the authenticated key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "object",
+                    "data"
+                  ],
+                  "properties": {
+                    "object": {
+                      "type": "string",
+                      "enum": [
+                        "list"
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "created": {
+                            "type": "integer",
+                            "format": "int64"
+                          },
+                          "owned_by": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      }
+    },
+    "/chat/completions": {
+      "post": {
+        "operationId": "createTextChatCompletion",
+        "summary": "Send a non-streaming text chat request",
+        "description": "Choose an ID returned by List Models and confirm Chat Completions support in the CheapClankers catalogue. This operation may consume prepaid credit. This reference covers a basic text request.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "model",
+                  "messages"
+                ],
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "An accessible model ID that supports Chat Completions"
+                  },
+                  "messages": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "role",
+                        "content"
+                      ],
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "user",
+                            "assistant",
+                            "system"
+                          ]
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Output token cap. Set a small cap when first integrating.",
+                    "example": 128
+                  },
+                  "stream": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ],
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat completion returned by the supported model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "choices": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "index": {
+                            "type": "integer"
+                          },
+                          "message": {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string"
+                              },
+                              "content": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "finish_reason": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        },
+        "externalDocs": {
+          "description": "Model catalogue and supported protocols",
+          "url": "https://cheapclankers.com/models"
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Use a CheapClankers API key. Keep it in a local secret store."
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "A valid CheapClankers API key is required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "RequestError": {
+        "description": "Request rejected or unavailable. Read the message and record the request ID before retrying.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "request_id": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
