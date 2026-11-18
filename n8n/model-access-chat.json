@@ -134,13 +134,46 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        180,
-        -430
+        -550,
+        -460
       ],
       "parameters": {
-        "content": "## CheapClankers: check access, then send one chat\n1. Create an HTTP Header Auth credential: name `Authorization`, value `Bearer YOUR_API_KEY`. Select it on BOTH HTTP nodes. Keep keys out of workflow JSON.\n2. In Configure request, set an exact enabled chat-capable model ID. Keep the production API root unless testing a trusted local fixture.\n3. Run manually. Success lists models, then sends ONE request capped at 128 output tokens. Automatic retries are off.\n\nA listed model establishes access, not current availability or chat support. Real inference consumes prepaid USD credit. Review usage before retrying failures.\n\n[API docs](https://cheapclankers.com/docs) | [Model catalogue](https://cheapclankers.com/models)\n\nMaintained by CheapClankers. Local fixture verification does not establish live inference compatibility.",
-        "height": 350,
-        "width": 730
+        "content": "### How it works\nThis manual workflow helps developers diagnose a custom AI API setup before inference. It lists models accessible to your key, checks an exact selected ID, and sends one chat-completions request only when that ID appears. A missing model stops execution without a chat request. Success returns the response JSON, including `choices[0].message.content`. HTTP errors stop execution; automatic retries are off. A listed model establishes access, not current availability or chat support.\n\n### Setup\nCreate a CheapClankers account and server-side API key. In n8n, create a Header Auth credential with name `Authorization` and value `Bearer YOUR_API_KEY`. Select it on BOTH HTTP nodes. Never paste a real key into this workflow export. In Configure request, replace the model placeholder with an enabled chat-capable ID from the [catalogue](https://cheapclankers.com/models). Keep the production API root unless testing a trusted fixture.\n\n### Customization\nThe example sends a short greeting with a 128-token output cap and 30-second timeout. Real requests consume prepaid USD credit; review usage before retrying interruptions. Each manual run can send another paid request. Saved executions are disabled here. Tested with n8n 2.48.5 against isolated fixtures, not live inference. [API setup](https://cheapclankers.com/docs). Maintained by CheapClankers.",
+        "height": 800,
+        "width": 540,
+        "color": 1
+      }
+    },
+    {
+      "id": "65799d0e-1613-407a-98a4-ddb6e1fd8f54",
+      "name": "Access check",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        190,
+        -240
+      ],
+      "parameters": {
+        "content": "## Check access before inference\nSet an exact chat model ID, list accessible models, and branch on whether that ID appears. Missing models stop before a paid request.",
+        "height": 470,
+        "width": 720,
+        "color": 7
+      }
+    },
+    {
+      "id": "9c6ffb5f-7a88-4ad2-a932-7960f98611ad",
+      "name": "One request",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        940,
+        -240
+      ],
+      "parameters": {
+        "content": "## Send once or stop\nThe success branch sends one capped chat. The false branch explains missing access. HTTP failures stop; check credit, protocol and availability before retrying.",
+        "height": 560,
+        "width": 400,
+        "color": 7
       }
     }
   ],
