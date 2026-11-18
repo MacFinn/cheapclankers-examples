@@ -1,0 +1,17 @@
+{
+  "name": "cheapclankers-integration-examples",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal Node.js and Python examples for a custom AI API endpoint",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node node-chat.mjs",
+    "test": "node --test verify.mjs"
+  },
+  "dependencies": {
+    "openai": "7.60.0"
+  }
+}
