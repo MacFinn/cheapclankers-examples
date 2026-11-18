@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom OpenAI API errors: diagnose 401, 404, 429 and 503</title>
+  <meta name="description" content="A reproducible Node.js and Python SDK error matrix for custom OpenAI-compatible endpoints. Separate model-list failures from chat failures and inspect request IDs and retries.">
+  <link rel="canonical" href="https://macfinn.github.io/cheapclankers-examples/sdk-errors.html">
+  <meta property="og:title" content="Diagnose custom OpenAI API errors">
+  <meta property="og:description" content="Follow the failing request, then reproduce SDK behavior with local fixtures.">
+  <meta property="og:type" content="article">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .article{max-width:900px;padding-bottom:48px}.article h1{font-size:clamp(40px,6vw,68px);letter-spacing:-2.5px}.article section{padding:30px 0;border-top:1px solid var(--line)}.article p,.article li{line-height:1.7}.article li{margin-bottom:10px}.article h2{margin-bottom:16px}.article h3{font-size:20px;margin-top:28px}.article nav{display:flex;flex-wrap:wrap;gap:12px 22px;margin:24px 0}.article table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}.article th,.article td{padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.article th{background:#eaf0e7}.table-scroll{overflow-x:auto}.article caption{text-align:left;margin-bottom:14px;color:var(--muted)}.note{padding:18px;background:#eaf0e7;border-radius:8px}.article pre{max-height:none;font-size:13px}.article a{overflow-wrap:anywhere}@media(max-width:600px){.article table{min-width:620px}.article th,.article td{padding:10px}.article h1{letter-spacing:-1.5px}}
+  </style>
+</head>
+<body>
+<header class="shell"><a class="brand" href="./">CheapClankers <span>developer tools</span></a><a href="https://github.com/MacFinn/cheapclankers-examples/blob/main/sdk-error-matrix.md">Source &amp; fixtures ↗</a></header>
+<main class="shell article">
+  <div class="intro">
+    <p class="eyebrow">CUSTOM ENDPOINT TROUBLESHOOTING</p>
+    <h1>Which request<br>actually failed?</h1>
+    <p class="lead">A 404 during model discovery and a 404 during generation need different investigations. Follow the operation before changing your prompt or retrying.</p>
+    <p>Reproducible with the official OpenAI SDKs: JavaScript 7.60.0 and Python 2.24.0. Fixture record: 18 November 2026.</p>
+    <nav aria-label="On this page"><a href="#first-check">First check</a><a href="#status-codes">Status codes</a><a href="#matrix">Fixture matrix</a><a href="#reproduce">Reproduce</a><a href="#limits">Limits</a></nav>
+  </div>
+  <section id="first-check">
+    <h2>Separate discovery from generation</h2>
+    <ol>
+      <li><strong>Identify the operation.</strong> These examples call <code>GET /v1/models</code> before <code>POST /v1/chat/completions</code>. Record which one failed and its status.</li>
+      <li><strong>Check the constructed path.</strong> The SDK appends the operation to your base URL. Use the provider's documented API root, including its version segment where required. A complete chat endpoint is not an API root.</li>
+      <li><strong>Check the exact model and protocol.</strong> Listing a model for your key does not prove it supports Chat Completions. Check the provider's catalogue and current availability.</li>
+      <li><strong>Keep the request ID.</strong> The examples print the ID exposed by the SDK: <code>requestID</code> in JavaScript and <code>request_id</code> in Python. Never include the API key in a support report.</li>
+    </ol>
+    <p>Some providers do not implement model listing. Confirm the endpoint contract before using a discovery gate; these examples deliberately require it.</p>
+  </section>
+  <section id="status-codes">
+    <h2>Investigate the status in context</h2>
+    <p>These are investigation starting points. The returned error and provider documentation determine the cause; a synthetic status cannot establish a live provider's error contract.</p>
+    <h3 id="error-401">401 or 403: authentication and access</h3>
+    <p>Check that the key belongs to the intended service, is current and has the required access. Confirm the intended environment variable is present without printing its value. In the fixtures, either status during discovery prevents any chat request.</p>
+    <h3 id="error-402">402: credit or billing</h3>
+    <p>Inspect the provider's returned message, account balance and applicable rates. The fixture checks that a failed completion prints the status and request ID, then exits without another completion attempt.</p>
+    <h3 id="error-404">404: compare the failing paths</h3>
+    <p>If discovery fails, check the host, API root, version segment and whether model listing is implemented. If discovery succeeds and chat fails, inspect the exact model ID, its supported protocol and current availability. A prompt edit cannot repair an unsupported endpoint.</p>
+    <h3 id="error-429">429: inspect limits before retrying</h3>
+    <p>Read the error and any <code>Retry-After</code> header, and check the provider's rate or concurrency limits. Both fixture clients set automatic retries to zero. A 429 carrying <code>Retry-After</code> still produces exactly one attempt at the failing operation.</p>
+    <h3 id="error-503">503 or timeout: preserve the evidence</h3>
+    <p>Check service status and retain the request ID if one was returned. Review usage before manually resending an interrupted billable request. The 503 fixture verifies the error path; timeouts and ambiguous completion outcomes are not tested here.</p>
+  </section>
+  <section id="matrix">
+    <h2>What the fixtures actually prove</h2>
+    <div class="table-scroll" role="region" aria-label="SDK fixture results" tabindex="0">
+      <table>
+        <caption>Each row runs through both SDKs: 22 checks. Request counts are per client execution.</caption>
+        <thead><tr><th scope="col">Fixture</th><th scope="col">Model-list requests</th><th scope="col">Chat requests</th><th scope="col">Expected result</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Successful response</th><td>1</td><td>1</td><td>Print reply; exit 0</td></tr>
+          <tr><th scope="row">Missing environment</th><td>0</td><td>0</td><td>Explain required variables; exit 1</td></tr>
+          <tr><th scope="row">Selected model absent</th><td>1</td><td>0</td><td>Explain absent model; exit 1</td></tr>
+          <tr><th scope="row">Discovery: 401</th><td>1</td><td>0</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Discovery: 403</th><td>1</td><td>0</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Discovery: 404</th><td>1</td><td>0</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Discovery: 429 with Retry-After</th><td>1</td><td>0</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Completion: 402</th><td>1</td><td>1</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Completion: 404</th><td>1</td><td>1</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Completion: 429 with Retry-After</th><td>1</td><td>1</td><td>Status and request ID; exit 1</td></tr>
+          <tr><th scope="row">Completion: 503</th><td>1</td><td>1</td><td>Status and request ID; exit 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The assertions also check bearer authentication, exact paths, the selected model, prompt, 128-token output cap and absence of fixture credentials in output. One discovery plus one chat call is two requests, but only one generation attempt.</p>
+  </section>
+  <section id="reproduce">
+    <h2>Run the same checks locally</h2>
+    <p>Use Node.js 22+ and Python 3.9+. These commands use a POSIX shell; on Windows run the installation commands in PowerShell and use <code>$env:PYTHON_BIN</code> if you need a different Python executable.</p>
+    <pre tabindex="0" aria-label="Reproduce the SDK checks"><code>git clone https://github.com/MacFinn/cheapclankers-examples.git
+cd cheapclankers-examples
+npm install
+python -m pip install -r requirements.txt
+npm test</code></pre>
+    <p>The harness starts an ephemeral server on <code>127.0.0.1</code> and gives child processes fictitious credentials, a fixture model and that local endpoint. It does not load a <code>.env</code> file or buy inference. Inspect <a href="https://github.com/MacFinn/cheapclankers-examples/blob/main/verify.mjs">the verification harness</a> and <a href="https://github.com/MacFinn/cheapclankers-examples/blob/main/sdk-error-matrix.md">the Markdown test record</a> before running it.</p>
+  </section>
+  <section id="limits">
+    <h2>Use the result within its limits</h2>
+    <p class="note">This is a client behavior test against synthetic responses. It does not measure live model availability, production inference, streaming, tool calls, timeouts, concurrency or pricing. It is not a production retry strategy.</p>
+    <p>CheapClankers maintains this resource and offers paid API access. The examples use the official OpenAI SDKs with a custom endpoint; no OpenAI endorsement is implied. This page was prepared with AI assistance.</p>
+    <p>For a service-specific next step, read the <a href="https://cheapclankers.com/guides/openai-node-sdk">Node.js SDK setup guide</a> or <a href="https://cheapclankers.com/guides/openai-python-sdk">Python SDK setup guide</a>, then check <a href="https://cheapclankers.com/models">current model protocols and availability</a>. You can also <a href="./">generate a bounded first-request example</a> without entering a key in your browser.</p>
+    <p>SDK reference: <a href="https://github.com/openai/openai-node#handling-errors">JavaScript error handling</a> and <a href="https://github.com/openai/openai-python#handling-errors">Python error handling</a>. Other providers require their own endpoint and access checks.</p>
+  </section>
+</main>
+<footer class="shell">An open source troubleshooting resource by <a href="https://cheapclankers.com/docs">CheapClankers</a>. <a href="LICENSE.txt">MIT licence</a> applies to this static resource.</footer>
+</body>
+</html>

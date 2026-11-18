@@ -99,3 +99,5 @@ Twenty-two checks cover the two SDKs: successful chat, missing environment, abse
 ## SDK setup tutorials
 
 For step-by-step endpoint configuration and troubleshooting, use the [OpenAI Node.js SDK guide](https://cheapclankers.com/guides/openai-node-sdk) or the [OpenAI Python SDK guide](https://cheapclankers.com/guides/openai-python-sdk). Both explain model discovery and link to the current catalogue; the runnable examples above remain self-contained.
+
+Read the [standalone SDK error troubleshooting guide](https://macfinn.github.io/cheapclankers-examples/sdk-errors.html) for an operation-by-operation explanation of the fixture matrix. It distinguishes model discovery from generation and links to the runnable source.
