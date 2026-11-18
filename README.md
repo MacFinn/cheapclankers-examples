@@ -95,3 +95,7 @@ npm test
 The harness replaces all `CLANKER_*` credentials/model/endpoint settings in its child processes with fixtures and uses a loopback-only HTTP server. It does not load a `.env` file or contact a production model. If Python is not named `python` on your machine, set `PYTHON_BIN` to its executable (for example, `export PYTHON_BIN=python3`).
 
 Twenty-two checks cover the two SDKs: successful chat, missing environment, absent model, 401/403/404/429 during model listing, and 402/404/429/503 during completion. Request counts confirm that failures do not trigger automatic retries, including 429 responses carrying Retry-After. The harness also checks the bearer header, request IDs, versioned API paths and payload. Passing checks do not establish live model availability or production inference success.
+
+## SDK setup tutorials
+
+For step-by-step endpoint configuration and troubleshooting, use the [OpenAI Node.js SDK guide](https://cheapclankers.com/guides/openai-node-sdk) or the [OpenAI Python SDK guide](https://cheapclankers.com/guides/openai-python-sdk). Both explain model discovery and link to the current catalogue; the runnable examples above remain self-contained.
