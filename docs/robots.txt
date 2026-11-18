@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://macfinn.github.io/cheapclankers-examples/sitemap.xml

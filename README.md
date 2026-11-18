@@ -1,5 +1,7 @@
 # CheapClankers API integration examples
 
+Try the [browser-only API setup builder](https://macfinn.github.io/cheapclankers-examples/) to generate bounded Node.js, Python and cURL examples for a custom endpoint. It never asks for an API key or makes inference calls. [Source and fixture checks](docs/README.md).
+
 Minimal Node.js and Python chat-completions examples using the official OpenAI SDKs with a custom base URL. These are maintained by CheapClankers for its developer API service; this is not an official OpenAI repository or a consumer AI subscription.
 
 Start with the [API setup documentation](https://cheapclankers.com/docs). Review the [model catalogue](https://cheapclankers.com/models) and [published pricing](https://cheapclankers.com/pricing) before a real request. Both working examples are included below, so you can follow the setup without an additional tutorial.

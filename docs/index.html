@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenAI-compatible API setup builder: Node.js, Python &amp; cURL</title>
+  <meta name="description" content="Generate a bounded Chat Completions example for a custom OpenAI-compatible API base URL. Check request paths and diagnose 401, 402, 403, 404, 429 and 503 errors.">
+  <link rel="canonical" href="https://macfinn.github.io/cheapclankers-examples/">
+  <meta property="og:title" content="OpenAI-compatible API setup builder">
+  <meta property="og:description" content="Build a small, deliberate first API request in Node.js, Python or cURL.">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<header class="shell"><a class="brand" href="https://cheapclankers.com/docs">CheapClankers <span>developer tools</span></a><a href="https://github.com/MacFinn/cheapclankers-examples">Source &amp; fixtures ↗</a></header>
+<main class="shell">
+  <noscript><p>This builder needs JavaScript. You can still read the setup checks below or use the <a href="https://github.com/MacFinn/cheapclankers-examples">complete SDK examples</a>.</p></noscript>
+  <div class="intro"><p class="eyebrow">CUSTOM ENDPOINTS, SMALL FIRST REQUESTS</p><h1>Get your API<br>setup right.</h1><p class="lead">Turn a custom OpenAI-compatible base URL into a bounded Chat Completions example. Check model access before your first generation.</p></div>
+  <section class="builder" aria-label="API example builder">
+    <form id="builder" novalidate>
+      <h2>Configure the example</h2>
+      <label for="base">API base URL</label><input id="base" name="base" type="url" value="https://api.cheapclankers.com/v1" required aria-describedby="base-help" spellcheck="false" autocomplete="off"><p id="base-help" class="hint">The SDK appends /models and /chat/completions. Use the API root, not the complete request path.</p>
+      <label for="model">Model ID <span class="optional">optional</span></label><input id="model" name="model" placeholder="Use CLANKER_MODEL from your environment" maxlength="200" spellcheck="false" autocomplete="off"><p class="hint">Use an exact ID returned for your key. The model must support Chat Completions.</p>
+      <label for="cap">Maximum output tokens</label><input id="cap" name="cap" type="number" min="1" max="4096" step="1" value="128"><p class="hint">This limits output, not total cost. Input, reasoning and other billed usage depend on the model and provider.</p>
+      <button class="primary" type="submit">Build example <span aria-hidden="true">→</span></button><p id="validation" role="alert"></p>
+      <p class="privacy">Runs entirely in your browser. No API key field, API calls or saved settings. A generated script makes real requests only when you run it.</p>
+    </form>
+    <div class="output">
+      <div class="code-head"><div role="group" aria-label="Example language"><button type="button" data-language="node" aria-pressed="true">Node.js</button><button type="button" data-language="python" aria-pressed="false">Python</button><button type="button" data-language="curl" aria-pressed="false">cURL</button></div><button id="copy" type="button" aria-label="Copy generated example">Copy</button></div>
+      <p id="install" class="install"></p><pre tabindex="0" aria-label="Generated example"><code id="code"></code></pre><p id="notice" role="status" class="hint"></p>
+    </div>
+  </section>
+  <section class="paths" aria-labelledby="paths-title"><div><p class="eyebrow">FOLLOW THE REQUEST</p><h2 id="paths-title">Three checks before you debug the prompt.</h2></div><ol><li><strong>Access</strong><span>GET <code id="models-path">/v1/models</code>. Is the exact model ID returned for your key?</span></li><li><strong>Protocol</strong><span>Confirm Chat Completions support in the provider's model catalogue. Listing a model does not prove it supports every endpoint.</span></li><li><strong>Availability &amp; credit</strong><span>Check current model status and prepaid balance. A model list is not an uptime test.</span></li></ol></section>
+  <section class="errors" aria-labelledby="errors-title"><div><p class="eyebrow">WHEN A REQUEST FAILS</p><h2 id="errors-title">Read the error before retrying.</h2><p>These are the documented CheapClankers signals. Other providers may use different status codes; read their returned error and documentation.</p></div><div class="error-card"><label for="error">Observed response</label><select id="error"><option value="401">401 · authentication</option><option value="403">403 · access denied</option><option value="402">402 · insufficient credit</option><option value="404">404 · path, model or protocol</option><option value="429">429 · rate or concurrency limit</option><option value="503">503 · unavailable route</option><option value="timeout">Timeout · uncertain result</option></select><h3 id="error-title">Check the key.</h3><p id="error-advice">Use the key for the intended service, confirm it has not been revoked and keep it in a server-side environment variable.</p><p class="hint">Keep the x-request-id header for support. The SDK examples disable automatic retries so a failed first request stays deliberate.</p></div></section>
+  <section class="reading"><h2>Continue from a small working request.</h2><p>CheapClankers maintains this independent tool and the companion fixtures. The generated examples use the official OpenAI SDKs; this tool is not endorsed by OpenAI. Fixture checks are local integration evidence, not proof of live model availability.</p><div class="links"><a href="https://cheapclankers.com/docs">API setup documentation ↗</a><a href="https://cheapclankers.com/models">Model IDs, protocols &amp; rates ↗</a><a href="https://github.com/MacFinn/cheapclankers-examples/blob/main/sdk-error-matrix.md">Reproduce the SDK error matrix ↗</a></div><p>Use Node.js 22+ with <code>openai@7.60.0</code>, or Python 3.9+ with <code>openai==2.24.0</code>, matching the companion fixture versions. The cURL example uses Bash/zsh and requires cURL with <code>--fail-with-body</code> support. Never place server-side API keys in browser JavaScript.</p></section>
+</main>
+<footer class="shell">An open source setup tool by <a href="https://cheapclankers.com/">CheapClankers</a> · <a href="https://github.com/MacFinn/cheapclankers-examples/tree/main/docs">Read the source</a></footer>
+</body>
+</html>
